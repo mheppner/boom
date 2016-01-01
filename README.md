@@ -1,6 +1,6 @@
 # Basic Object Obtainment Maître d'
 
-Simple Django application to retrieval remote content and stream back from BOOM server.  Content may be optionally Base64 encoded by BOOM.
+Simple Django application to retrieve remote content and stream back from BOOM server.  Content may be optionally Base64 encoded by BOOM.
 
 ## Usage
 
