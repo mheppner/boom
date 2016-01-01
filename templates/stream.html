@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BOOM</title>
+
+    <!-- Bootstrap -->
+    {% load staticfiles %}
+    <link rel="shortcut icon" type="image/png" href="{% static 'favicon.png' %}"/>
+    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'bootstrap/css/bootstrap-theme.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/sticky-footer-navbar.css' %}" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">Basic Object Obtainment Maître d&#039; (BOOM)</a>
+        </div>
+    </div>
+</nav>
+<div class="container">
+    <div class="row">
+        <img class="center-block" src="{% static 'logo.jpg' %}"/>
+    </div>
+    <div class="row">
+        {% load crispy_forms_tags %}
+
+        {% block content %}
+            {% crispy form %}
+        {% endblock %}
+    </div>
+</div>
+<footer class="footer">
+    <div class="container">
+        <p class="text-muted">Full credit to Ben McDonie for the acronym. David Moore for the amazing original idea.
+            Oh, and freepik for the awesome boom icon.</p>
+    </div>
+</footer>
+</body>
+</html>
