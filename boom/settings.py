@@ -123,7 +123,8 @@ USE_TZ = True
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
-APP_CONTEXT = 'boom'
+# If overriding ensure trailing slash is present, e.g. 'boom/'
+APP_CONTEXT = os.getenv('APP_CONTEXT', '')
 
 STATICFILES_DIRS = (
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
@@ -135,4 +136,4 @@ STATICFILES_DIRS = (
     ),
 )
 
-STATIC_URL = '/%s/static/' % (APP_CONTEXT,)
+STATIC_URL = '/%sstatic/' % (APP_CONTEXT,)
