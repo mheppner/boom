@@ -16,5 +16,6 @@ class Download(models.Model):
     remote = models.URLField()
     file_name = models.TextField()
     base64encode = models.BooleanField(default=False)
+    git_branches = models.NullBooleanField(default=False, null=True)
 
 admin.site.register(Download)
