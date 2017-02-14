@@ -1,4 +1,5 @@
 import os
+import traceback
 
 from api.models import Download
 from api.forms import StreamForm
@@ -65,7 +66,9 @@ def view_file_retrieve(remote, file_name, do_base64_encode, client_ip):
             return response
     except Exception, ex:
         model.status = 'FAILED'
-        model.error = ex.message
+        ex_str = traceback.format_exc()
+        model.error = ex_str
+        return HttpResponse(ex_str, status=400)
     finally:
         model.save()
 
@@ -87,8 +90,8 @@ def view_git_repo_retrieve(remote, file_name, do_base64_encode, client_ip, branc
     model.git_branches = branches
     
     try:
+        print('Starting retrieve...')
         output_file = git_repo_retrieve(remote, do_base64_encode, branches)
-        
         with FileCleaner(output_file, 'rb') as fp:
 
             response = HttpResponse(fp)
@@ -97,7 +100,9 @@ def view_git_repo_retrieve(remote, file_name, do_base64_encode, client_ip, branc
             return response
     except Exception, ex:
         model.status = 'FAILED'
-        model.error = ex.message
+        ex_str = traceback.format_exc()
+        model.error = ex_str
+        return HttpResponse(ex_str, status=400)
     finally:
         model.save()
 
