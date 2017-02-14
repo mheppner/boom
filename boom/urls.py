@@ -20,6 +20,6 @@ from django.contrib import admin
 from api.views import stream_view
 
 urlpatterns = [
-    url(r'^%s/admin/' % settings.APP_CONTEXT, admin.site.urls),
-    url(r'^%s/$' % settings.APP_CONTEXT, stream_view),
+    url(r'^%sadmin/' % settings.APP_CONTEXT, admin.site.urls),
+    url(r'^%s$' % settings.APP_CONTEXT, stream_view),
 ]

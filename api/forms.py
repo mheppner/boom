@@ -5,8 +5,16 @@ from crispy_forms.layout import Layout, Submit
 
 
 class StreamForm(forms.Form):
-    remote = forms.URLField(help_text='Remote URI of file to retrieve')
+    remote = forms.URLField(help_text='Remote URI of object to retrieve')
     file_name = forms.CharField(help_text='Valid file name including extension to name download')
+    retrieve_type = forms.ChoiceField(
+        choices=(
+            ('file', "URL to publicly available file"),
+            ('git', "HTTP/HTTPS endpoint to git repo, default branch only"),
+            ('git-all', "HTTP/HTTPS endpoint to git repo, with all branches")
+        ),
+        widget=forms.RadioSelect,
+        initial='file')
     base64_encode = forms.ChoiceField(
         choices=(
             (True, "Base64 encode download"),
@@ -22,6 +30,7 @@ class StreamForm(forms.Form):
     helper.layout = Layout(
         'remote',
         'file_name',
+        'retrieve_type',
         'base64_encode',
         Submit('submit', 'Download', css_class='btn-primary'),
     )
