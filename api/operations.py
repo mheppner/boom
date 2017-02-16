@@ -60,8 +60,6 @@ def chunk_data(target_dir, file_name, target_name, base64, chunk_size):
                 for file in files:
                     arc_name = '%s.%s' % (target_name, file.split('.', 1)[1])
                     my_zip.write(file, arc_name)
-                    print(file)
-                    print(arc_name)
                 my_zip.write(helper_name, 'reconstitute.sh')
             
             # Now that all files are packed into zip assign name to return
