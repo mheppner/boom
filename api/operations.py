@@ -66,8 +66,6 @@ def chunk_data(target_dir, file_name, target_name, base64, chunk_size):
             file_name = output_file
         else:
             file_name = files[0]
-            
-        print file_name
 
         # Move output file out of temp space so we can torch directory
         final_output_file = os.path.join(target_dir, os.path.basename(file_name))
