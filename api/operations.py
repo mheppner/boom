@@ -11,69 +11,76 @@ import zipfile
 def get_random_file_name():
     return str(uuid.uuid4())
 
-def base64_encode(file_name):
+def base64_encode(file_name, extension):
     """
-    Base64 encode input file and replace input file
+    Base64 encode input file and return file suffixed with extension
     :param file_name:
-    :return:
+    :param extension:
+    :return: output file name
     """
     
-    temp_file = '%s.tmp' % (file_name,)
+    output_file = '%s.%s' % (file_name, extension)
     with open(file_name, 'rb') as in_file:
-        with open(temp_file, 'w') as out_file:
+        with open(output_file, 'w') as out_file:
             base64.encode(in_file, out_file)
 
-    os.remove(file_name)
-    os.rename(temp_file, file_name)
+    return output_file
     
-def chunk_data(file_name, target_name, base64, chunk_size):
-    files = [file_name]
-    
-    start_dir = os.path.abspath(os.getcwd())
-
+def chunk_data(target_dir, file_name, target_name, base64, chunk_size):
     try:
         temp_path = tempfile.mkdtemp()
         
-        # Retrieve via clone
+        files = [os.path.join(temp_path, os.path.basename(file_name))]
+        # Move input file into temp space so that cleanup will catch it
+        shutil.move(os.path.abspath(file_name), files[0])
+        
         os.chdir(temp_path)
           
         # Track all files from chunking
         if chunk_size > 0:
-            files = split_file(os.path.join(start_dir, files[0]), chunk_size)
-            
+            files = split_file(files[0], chunk_size)
+        
         if base64:
+            encoded_files = []
             for file in files:
-                base64_encode(file)
+                encoded_files.append(base64_encode(file, 'txt'))
+            files = encoded_files
         
         # if we have more than one file, zip it up for download
         if len(files) > 1:
             
-            random_name = os.path.join(start_dir, get_random_file_name() + '.zip')
+            output_file = get_random_file_name() + '.zip'
             
             helper_name = get_random_file_name() + '.sh'
             # Write a helper file to rebuild from chunks
             with open(helper_name, 'w') as helper:
-                helper.write('cat %s.??? %s> %s' % (target_name, '| base64 -d ' if base64 else '', target_name))
+                helper.write('cat %s.???%s> %s' % (target_name, '.txt | base64 -d ' if base64 else ' ', target_name))
             
-            with zipfile.ZipFile(random_name, 'w') as my_zip:
+            with zipfile.ZipFile(output_file, 'w') as my_zip:
                 for file in files:
-                    arc_name = '%s.%s' % (target_name, file.split('.')[1])
+                    arc_name = '%s.%s' % (target_name, file.split('.', 1)[1])
                     my_zip.write(file, arc_name)
                 my_zip.write(helper_name, 'reconstitute.sh')
             
             # Now that all files are packed into zip assign name to return
-            file_name = random_name
+            file_name = output_file
+        else:
+            file_name = files[0]
+
+        # Move output file out of temp space so we can torch directory
+        final_output_file = os.path.join(target_dir, os.path.basename(file_name))
+        shutil.move(file_name, final_output_file)
+    
     except:
         raise
     finally:            
-        os.chdir(start_dir)
+        os.chdir(target_dir)
         try:
             shutil.rmtree(temp_path)
         except:
             pass
 
-        
-    return file_name
+    return final_output_file
     
 def file_retrieve(remote, target_name, base64, chunk_size=0):
     """Support for retrieval of arbitrary files
@@ -84,21 +91,18 @@ def file_retrieve(remote, target_name, base64, chunk_size=0):
     :param chunk_size: 0 for no chunking, otherwise max size in MiBs
     """
     
-    file_name = get_random_file_name()
-    urllib.urlretrieve(remote, file_name)
-        
-    output_file = chunk_data(file_name, target_name, base64, chunk_size)
+    target_dir = os.path.abspath(os.getcwd())
     
-    # if data was chunked, clean up source file
-    if file_name != output_file:
-        os.remove(file_name)
-        
+    file_name = os.path.abspath(get_random_file_name())
+    urllib.urlretrieve(remote, file_name)
+    
+    output_file = chunk_data(target_dir, file_name, target_name, base64, chunk_size)
+
     return output_file
 
-def git_repo_retrieve(remote, target_name, base64, branches=False, chunk_size=0):
+def git_repo_retrieve(remote, base64, branches=False, chunk_size=0):
     """Support for retrieval of git repos, with associated tags and branches
     :param remote: HTTPS url of git repo
-    :param target_name: chosen name for file to download
     :param base64: Whether file should be base64 encoded
     :param branches: Whether tags other than default should be retrieved
     :param chunk_size: 0 for no chunking, otherwise max size in MiBs
@@ -122,6 +126,8 @@ def git_repo_retrieve(remote, target_name, base64, branches=False, chunk_size=0)
         if proc.returncode != 0:
             raise Exception('Invalid return code of %s from git clone.\nOutput: %s\nError: %s' % (proc.returncode, output, err))
         git_dir = os.listdir(temp_path)[0]
+        # Use the directory name cloned to generate the file name
+        target_name = '%s.zip' % git_dir
         
         # If branches we need extra magic
         if branches:
@@ -138,14 +144,13 @@ def git_repo_retrieve(remote, target_name, base64, branches=False, chunk_size=0)
             shutil.rmtree(temp_path)
         except:
             pass
-        
-    output_file = chunk_data(file_name, target_name, base64, chunk_size)
+
+    output_file = chunk_data(start_dir, file_name, target_name, base64, chunk_size)
     
-    # if data was chunked, clean up source file
-    if file_name != output_file:
-        os.remove(file_name)
+    if output_file.endswith('.txt'):
+        target_name += '.txt'
         
-    return output_file
+    return output_file, target_name
     
 def split_file(path, size_mb):
     MAX  = size_mb*1024*1024 # max chapter size

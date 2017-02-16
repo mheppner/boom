@@ -6,7 +6,7 @@ from crispy_forms.layout import Layout, Submit
 
 class StreamForm(forms.Form):
     remote = forms.URLField(help_text='Remote URI of object to retrieve')
-    file_name = forms.CharField(help_text='Valid file name including extension to name download')
+    file_name = forms.CharField(help_text='File name including extension to name download. (Ignored with git clones)')
     chunk_size = forms.IntegerField(help_text='Maximum file chunk in MiBs. 0 will skip chunking. Base64 encoding will grow chunks by roughly 4/3s.',
                                 initial=0)
     retrieve_type = forms.ChoiceField(
