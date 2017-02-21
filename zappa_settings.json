@@ -1,0 +1,7 @@
+{
+    "dev": {
+        "django_settings": "boom.settings",
+        "s3_bucket": "ais-boom",
+        "aws_region": "us-east-2"
+    }
+}
