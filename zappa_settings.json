@@ -2,6 +2,14 @@
     "dev": {
         "django_settings": "boom.settings",
         "s3_bucket": "ais-boom",
-        "aws_region": "us-east-2"
+        "aws_region": "us-east-1",
+        "environment_variables": {
+            "DEBUG": "false",
+            "SECRET_KEY": "change-this-key",
+            "DEFAULT_FILE_STORAGE": "storages.backends.s3boto3.S3Boto3Storage",
+            "STATICFILES_STORAGE": "storages.backends.s3boto3.S3Boto3Storage",
+            "AWS_STORAGE_BUCKET_NAME": "ais-boom",
+            "ALLOWED_HOSTS": "*"
+        }
     }
 }
