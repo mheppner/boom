@@ -1,10 +1,23 @@
+import environ
 import os
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# inner project dir
+base_dir = environ.Path(__file__) - 1
+BASE_DIR = base_dir()
 
-SECRET_KEY = '_foxx(=7)9rk@o0y#a$l6h*ro^ftv)h@$$yy751l4=9&qx%ua*'
-DEBUG = True
-ALLOWED_HOSTS = []
+# outside project dir
+root_dir = base_dir - 1
+
+# load the default env file
+env = environ.Env(DEBUG=(bool, False),)
+environ.Env.read_env(root_dir.path('.env')())
+
+# core env variables
+DEBUG = env('DEBUG')
+SECRET_KEY = env('SECRET_KEY')
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
+INTERNAL_IPS = env.list('INTERNAL_IPS', default=[])
+HTTPS_ONLY = env.bool('HTTPS_ONLY', default=False)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -34,7 +47,7 @@ ROOT_URLCONF = 'boom.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [root_dir('templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -50,10 +63,9 @@ TEMPLATES = [
 WSGI_APPLICATION = 'boom.wsgi.application'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+    'default': env.db(
+        default='sqlite:///{}'.format(base_dir('db.sqlite3'))
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -71,26 +83,42 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_L10N = True
-USE_TZ = True
+LANGUAGE_CODE = env.str('LANGUAGE_CODE', default='en-us')
+TIME_ZONE = env.str('TIME_ZONE', default='UTC')
+USE_I18N = env.bool('USE_I18N', default=True)
+USE_L10N = env.bool('USE_L10N', default=True)
+USE_TZ = env.bool('USE_TZ', default=True)
 
 # If overriding ensure trailing slash is present, e.g. 'boom/'
-APP_CONTEXT = os.getenv('APP_CONTEXT', '')
+APP_CONTEXT = env.str('APP_CONTEXT', default='')
 
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-AWS_STORAGE_BUCKET_NAME = 'ais-boom-static'
-AWS_AUTO_CREATE_BUCKET = True
-AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
-
-STATIC_URL = "https://%s/" % AWS_S3_CUSTOM_DOMAIN
+CRISPY_TEMPLATE_PACK = env.str('CRISPY_TEMPLATE_PACK', default='bootstrap3')
 STATICFILES_DIRS = (
     os.path.join(
-        os.path.dirname(__file__), 'static',
+        base_dir('static')
     ),
 )
 
-CRISPY_TEMPLATE_PACK = 'bootstrap3'
+# allow zappa settings to switch media storage to s3
+DEFAULT_FILE_STORAGE = env.str(
+    'DEFAULT_FILE_STORAGE',
+    default='django.core.files.storage.FileSystemStorage')
+
+# zappa will switch static storage to s3
+STATICFILES_STORAGE = env.str(
+    'STATICFILES_STORAGE',
+    default='django.contrib.staticfiles.storage.StaticFilesStorage')
+
+# sets the bucket to upload static files into
+AWS_STORAGE_BUCKET_NAME = env.str('AWS_STORAGE_BUCKET_NAME', default='')
+AWS_AUTO_CREATE_BUCKET = True
+
+# if a bucket name is provided, set the s3 url for static files
+if len(AWS_STORAGE_BUCKET_NAME):
+    AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+    DEFAULT_STATIC_URL = "https://%s/" % AWS_S3_CUSTOM_DOMAIN
+else:
+    DEFAULT_STATIC_URL = APP_CONTEXT + '/static/'
+
+# use a default static url, but still allow overriding through the env
+STATIC_URL = env.str('STATIC_URL', default=DEFAULT_STATIC_URL)
